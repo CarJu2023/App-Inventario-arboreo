@@ -204,7 +204,39 @@ header {
 /* ══════════════════════════════════════
    FORM FIELDS
 ══════════════════════════════════════ */
-.field { margin-bottom: 14px; }
+.field { margin-bottom: 14px; position: relative; }
+
+.autocomplete-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  max-height: 230px;
+  overflow-y: auto;
+  margin-top: 4px;
+  display: none;
+  -webkit-overflow-scrolling: touch;
+}
+.autocomplete-list.open { display: block; }
+.autocomplete-item {
+  padding: 11px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+.autocomplete-item:last-child { border-bottom: none; }
+.autocomplete-item:hover,
+.autocomplete-item.active { background: var(--sky); }
+.autocomplete-empty {
+  padding: 11px 14px;
+  font-size: 13px;
+  color: var(--muted);
+}
 .field:last-child { margin-bottom: 0; }
 
 label {
@@ -1023,167 +1055,11 @@ select {
 
     <div class="field">
       <label>Nombre común</label>
-      <input type="text" id="nombre_comun" list="especies_datalist" placeholder="Escribir..." autocomplete="off" autocapitalize="words" oninput="autocompletarEspecie();">
-      <datalist id="especies_datalist">
-        <option>Acacia</option>
-        <option>Acacia amarilla</option>
-        <option>Acacia negra</option>
-        <option>Acacia roja</option>
-        <option>Aceituno</option>
-        <option>Aguacate</option>
-        <option>Aguacatillo</option>
-        <option>Akí</option>
-        <option>Alcaparro grande</option>
-        <option>Almendro</option>
-        <option>Angarillo</option>
-        <option>Anon de monte</option>
-        <option>Anón</option>
-        <option>Araucaria</option>
-        <option>Arbolito de navidad</option>
-        <option>Arrayan</option>
-        <option>Arrayan chulito</option>
-        <option>Balso</option>
-        <option>Balso blanco</option>
-        <option>Balso tambor</option>
-        <option>Bambu</option>
-        <option>Bayo blanco</option>
-        <option>Bilibil</option>
-        <option>Bodoquero</option>
-        <option>Borrachero</option>
-        <option>Buganvil</option>
-        <option>Caballero de la noche</option>
-        <option>Cacao</option>
-        <option>Cacao de monte</option>
-        <option>Cachimbo</option>
-        <option>Caesalpinia sp</option>
-        <option>Caimo</option>
-        <option>Cambulo</option>
-        <option>Caracolí</option>
-        <option>Carbonero de sombrio</option>
-        <option>Carbonero ornamental</option>
-        <option>Carbonero rojo</option>
-        <option>Carbón</option>
-        <option>Casco de vaca</option>
-        <option>Cauchillo</option>
-        <option>Caucho</option>
-        <option>Caucho de la india</option>
-        <option>Caucho higueron</option>
-        <option>Cedro cebollero</option>
-        <option>Cedro rosado</option>
-        <option>Ceiba</option>
-        <option>Ceiba mil pesos</option>
-        <option>Chachafruto</option>
-        <option>Chambimbe</option>
-        <option>Chicalá</option>
-        <option>Chichato</option>
-        <option>Chilco</option>
-        <option>Chirimoyo</option>
-        <option>Chirlobirlo</option>
-        <option>Chitato</option>
-        <option>Cipres</option>
-        <option>Ciruelo</option>
-        <option>Clavellino</option>
-        <option>Cobalonga</option>
-        <option>Cobre</option>
-        <option>Coralito</option>
-        <option>Cordoncillo</option>
-        <option>Croto</option>
-        <option>Cucharo</option>
-        <option>Cuji</option>
-        <option>Dinde</option>
-        <option>Diomate</option>
-        <option>Eucalipto</option>
-        <option>Ficus</option>
-        <option>Ficus variegado</option>
-        <option>Frisolillo</option>
-        <option>Gomo</option>
-        <option>Guacharaco</option>
-        <option>Guadua</option>
-        <option>Gualanday</option>
-        <option>Guamo</option>
-        <option>Guamo macheto</option>
-        <option>Guanabano</option>
-        <option>Guanabano de monte</option>
-        <option>Guayabo</option>
-        <option>Guayacan</option>
-        <option>Guayacán de bola</option>
-        <option>Guácimo</option>
-        <option>Higueron</option>
-        <option>Hubo caimaron</option>
-        <option>Iguá</option>
-        <option>Jaguo</option>
-        <option>Jigua</option>
-        <option>Jobo</option>
-        <option>Lacre</option>
-        <option>Laurel</option>
-        <option>Lechero rojo</option>
-        <option>Leucaena</option>
-        <option>Limon tahiti</option>
-        <option>Limón</option>
-        <option>Limón swinglea</option>
-        <option>Lluvia de oro</option>
-        <option>Maco</option>
-        <option>Malachí</option>
-        <option>Mamoncillo</option>
-        <option>Mandarino</option>
-        <option>Mango</option>
-        <option>Manteco</option>
-        <option>Manzana del elefante</option>
-        <option>Matarraton</option>
-        <option>Maíz tostado</option>
-        <option>Melina</option>
-        <option>Mirto</option>
-        <option>Moho</option>
-        <option>Monacá</option>
-        <option>Moringa</option>
-        <option>Muche</option>
-        <option>Nacedero</option>
-        <option>Naranjo</option>
-        <option>Naranjuelo</option>
-        <option>Neem</option>
-        <option>Nogal cafetero</option>
-        <option>Nomeolvides</option>
-        <option>Noni</option>
-        <option>Níspero</option>
-        <option>Ocobo</option>
-        <option>Oití</option>
-        <option>Orejero</option>
-        <option>Pachira</option>
-        <option>Palma</option>
-        <option>Palma africana</option>
-        <option>Palma areca</option>
-        <option>Palma botella</option>
-        <option>Palma corozo</option>
-        <option>Palma datilera</option>
-        <option>Palma de vino</option>
-        <option>Palma real</option>
-        <option>Palo de cruz</option>
-        <option>Palo santo</option>
-        <option>Payandé</option>
-        <option>Pela</option>
-        <option>Pera de malaca</option>
-        <option>Pino araucaria</option>
-        <option>Pino cipres</option>
-        <option>Pino libro</option>
-        <option>Pino patula</option>
-        <option>Pino romeron</option>
-        <option>Samán</option>
-        <option>Sangregado</option>
-        <option>Scheflera</option>
-        <option>Sin identificación</option>
-        <option>Tachuelo</option>
-        <option>Tamarindo</option>
-        <option>Teca</option>
-        <option>Totumo</option>
-        <option>Trapichero</option>
-        <option>Tulipan africano</option>
-        <option>Tuno blanco</option>
-        <option>Urapan</option>
-        <option>Vainillo</option>
-        <option>Vara santa</option>
-        <option>Yarumo</option>
-        <option>Zurrumbo</option>
-      </datalist>
+      <input type="text" id="nombre_comun" placeholder="Escribir..." autocomplete="off" autocapitalize="words"
+             oninput="autocompletarEspecie(); filtrarEspecies(this.value);"
+             onfocus="filtrarEspecies(this.value);"
+             onblur="setTimeout(ocultarSugerenciasEspecies, 150);">
+      <div class="autocomplete-list" id="especies-sugerencias"></div>
     </div>
 
     <div class="grid-2">
@@ -1205,7 +1081,7 @@ select {
     <div class="grid-2">
       <div class="field">
         <label>CAP (cm)</label>
-        <  input type="number" id="cap_cm" placeholder="-" step="0.1" inputmode="decimal" oninput="calcular()">
+        <input type="number" id="cap_cm" placeholder="-" step="0.1" inputmode="decimal" oninput="calcular()">
       </div>
       <div class="field">
         <label>DAP (cm) — calculado</label>
@@ -2090,6 +1966,54 @@ function autocompletarEspecie() {
     cientifico.value = '';
     familia.value = '';
   }
+}
+
+// ══════════════════════════════════════
+// NOMBRE COMÚN — sugerencias mientras se escribe
+// (reemplaza al <datalist> nativo, que en varios
+// navegadores muestra TODA la lista sin filtrar bien)
+// ══════════════════════════════════════
+function filtrarEspecies(texto) {
+  const cont = document.getElementById('especies-sugerencias');
+  if (!cont) return;
+  const q = (texto || '').trim().toLowerCase();
+
+  if (q.length < 2) {
+    cont.classList.remove('open');
+    cont.innerHTML = '';
+    return;
+  }
+
+  const coincidencias = Object.keys(ESPECIES_DB)
+    .filter(nombre => nombre.toLowerCase().includes(q))
+    .sort((a, b) => {
+      const ai = a.toLowerCase().indexOf(q);
+      const bi = b.toLowerCase().indexOf(q);
+      if (ai !== bi) return ai - bi;           // los que empiezan con "q" van primero
+      return a.localeCompare(b, 'es');
+    })
+    .slice(0, 8);                              // máximo 8 sugerencias visibles
+
+  if (coincidencias.length === 0) {
+    cont.innerHTML = '<div class="autocomplete-empty">Sin coincidencias — puedes escribir el nombre igual</div>';
+  } else {
+    cont.innerHTML = coincidencias.map(nombre =>
+      `<div class="autocomplete-item" onmousedown="event.preventDefault(); seleccionarEspecie('${nombre.replace(/'/g, "\\'")}')">${nombre}</div>`
+    ).join('');
+  }
+  cont.classList.add('open');
+}
+
+function seleccionarEspecie(nombre) {
+  const campo = document.getElementById('nombre_comun');
+  campo.value = nombre;
+  autocompletarEspecie();
+  ocultarSugerenciasEspecies();
+}
+
+function ocultarSugerenciasEspecies() {
+  const cont = document.getElementById('especies-sugerencias');
+  if (cont) { cont.classList.remove('open'); cont.innerHTML = ''; }
 }
 
 // ══════════════════════════════════════
