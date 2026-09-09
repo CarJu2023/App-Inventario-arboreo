@@ -651,6 +651,25 @@ select {
 .record-del-btn:hover,
 .record-del-btn:active { background: #ffe0e0; }
 
+.record-edit-btn {
+  border: none;
+  background: var(--sky);
+  color: var(--canopy);
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.record-edit-btn:hover,
+.record-edit-btn:active { background: var(--mint); }
+
 .badge {
   display: inline-block;
   padding: 4px 10px;
@@ -952,7 +971,7 @@ select {
     </div>
   </div>
   <div class="tabs">
-    <div class="tab active" id="tab-form"     onclick="showPage('form',this)">➕ Nuevo</div>
+    <div class="tab active" id="tab-form"     onclick="nuevoRegistro(this)">➕ Nuevo</div>
     <div class="tab"        id="tab-historial" onclick="showPage('historial',this)">📋 Historial</div>
     <div class="tab"        id="tab-exportar"  onclick="showPage('exportar',this)">📊 Exportar</div>
   </div>
@@ -985,7 +1004,7 @@ select {
     <div class="grid-2">
       <div class="field">
         <label>N° de árbol *</label>
-        <input type="number" id="num_arbol" placeholder="001" inputmode="numeric" min="0" step="1" onkeydown="if(event.key==='-'||event.key==='Minus')event.preventDefault();" oninput="if(this.value<0)this.value=this.value.replace('-','');">
+        <input type="text" id="num_arbol" placeholder="Obligatorio" autocapitalize="characters" autocomplete="off" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,'');">
       </div>
       <div class="field">
         <label>Bifurcaciones</label>
@@ -1004,8 +1023,8 @@ select {
 
     <div class="field">
       <label>Nombre común</label>
-      <select id="nombre_comun" onchange="toggleOtroNombre(); autocompletarEspecie();">
-        <option value="">Seleccionar especie...</option>
+      <input type="text" id="nombre_comun" list="especies_datalist" placeholder="Escribir..." autocomplete="off" autocapitalize="words" oninput="autocompletarEspecie();">
+      <datalist id="especies_datalist">
         <option>Acacia</option>
         <option>Acacia amarilla</option>
         <option>Acacia negra</option>
@@ -1164,13 +1183,7 @@ select {
         <option>Vara santa</option>
         <option>Yarumo</option>
         <option>Zurrumbo</option>
-        <option>Otro</option>
-      </select>
-    </div>
-
-    <div class="field" id="field_otro_nombre" style="display:none">
-      <label>Especifica el nombre común</label>
-      <input type="text" id="nombre_comun_otro" placeholder="Escribe el nombre común..." autocapitalize="words">
+      </datalist>
     </div>
 
     <div class="grid-2">
@@ -1192,7 +1205,7 @@ select {
     <div class="grid-2">
       <div class="field">
         <label>CAP (cm)</label>
-        <input type="number" id="cap_cm" placeholder="-" step="0.1" inputmode="decimal" oninput="calcular()">
+        <  input type="number" id="cap_cm" placeholder="-" step="0.1" inputmode="decimal" oninput="calcular()">
       </div>
       <div class="field">
         <label>DAP (cm) — calculado</label>
@@ -1481,7 +1494,7 @@ select {
     </div>
   </div>
 
-  <button class="fab" type="button" onclick="guardarRegistro()">
+  <button class="fab" type="button" id="btn-guardar" onclick="guardarRegistro()">
     💾 Guardar registro
   </button>
 </div>
@@ -1494,7 +1507,7 @@ select {
     <input type="text" id="search-input" placeholder="Buscar por nombre, barrio o número..." oninput="renderHistorial()" autocomplete="off" autocorrect="off" spellcheck="false">
   </div>
   <div id="historial-contenido"></div>
-  <button class="fab" type="button" onclick="showPage('form', document.getElementById('tab-form'))">➕ Nuevo registro</button>
+  <button class="fab" type="button" onclick="nuevoRegistro()">➕ Nuevo registro</button>
 </div>
 
 <!-- ══════════════════════════════
@@ -2080,21 +2093,6 @@ function autocompletarEspecie() {
 }
 
 // ══════════════════════════════════════
-// NOMBRE COMÚN — "Otro"
-// ══════════════════════════════════════
-function toggleOtroNombre() {
-  const sel = document.getElementById('nombre_comun');
-  const field = document.getElementById('field_otro_nombre');
-  if (sel.value === 'Otro') {
-    field.style.display = 'block';
-    document.getElementById('nombre_comun_otro').focus();
-  } else {
-    field.style.display = 'none';
-    document.getElementById('nombre_comun_otro').value = '';
-  }
-}
-
-// ══════════════════════════════════════
 // CHIPS (buttons, NOT divs — iOS fix)
 // ══════════════════════════════════════
 function selChip(btn, fieldId) {
@@ -2272,20 +2270,100 @@ function toggleManual() {
 }
 
 // ══════════════════════════════════════
+// EDITAR REGISTRO (desde el Historial)
+// ══════════════════════════════════════
+let editandoId = null;
+
+function nuevoRegistro(tabEl) {
+  editandoId = null;
+  limpiar();
+  const btnGuardar = document.getElementById('btn-guardar');
+  if (btnGuardar) btnGuardar.innerHTML = '💾 Guardar registro';
+  showPage('form', tabEl || document.getElementById('tab-form'));
+}
+
+function editarRegistro(id) {
+  const r = getData().find(x => x.id === id);
+  if (!r) { toast('⚠️ No se encontró el registro'); return; }
+
+  limpiar();
+  editandoId = id;
+
+  // Campos de texto simples
+  const camposTexto = ['num_arbol','nombre_cientifico','familia','cap_cm','altura_total',
+    'altura_comercial','diam_copa','coord_x','coord_y','direccion','barrio','observaciones'];
+  camposTexto.forEach(campo => {
+    const el = document.getElementById(campo);
+    if (el && r[campo] !== undefined) el.value = r[campo];
+  });
+
+  // Selects simples
+  ['bifurcaciones','tipo_altura','emplazamiento','comuna'].forEach(campo => {
+    const el = document.getElementById(campo);
+    if (el && r[campo] !== undefined) el.value = r[campo];
+  });
+
+  // Nombre común (campo de texto con sugerencias)
+  const campoNombre = document.getElementById('nombre_comun');
+  if (campoNombre) {
+    campoNombre.value = r.nombre_comun || '';
+    autocompletarEspecie();
+    // Si el árbol tenía nombre científico/familia digitados a mano (no en la BD), respétalos
+    if (r.nombre_cientifico) document.getElementById('nombre_cientifico').value = r.nombre_cientifico;
+    if (r.familia)           document.getElementById('familia').value = r.familia;
+  }
+
+  // Chips (selección única)
+  const camposChip = ['estado_sanitario','estado_copa','densidad_copa','habito_crecimiento',
+    'valor_estetico','accion_intervencion','conflicto_redes'];
+  camposChip.forEach(campo => {
+    const hidden = document.getElementById(campo);
+    if (hidden) hidden.value = r[campo] || '';
+    document.querySelectorAll(`.chip[onclick*="'${campo}'"]`).forEach(chip => {
+      const activo = r[campo] && chip.textContent.trim().toUpperCase() === String(r[campo]).toUpperCase();
+      chip.classList.toggle('sel', !!activo);
+    });
+  });
+
+  // Multi-select (estado físico, relación con redes)
+  ['estado_fisico','relacion_red'].forEach(campo => {
+    const valores = (r[campo] || '').split(',').map(x => x.trim()).filter(Boolean);
+    const dropdown = document.getElementById(campo + '_dropdown');
+    if (dropdown) {
+      dropdown.querySelectorAll('.msel-option').forEach(opt => {
+        opt.classList.toggle('sel', valores.includes(opt.dataset.value));
+      });
+      updateExclusiveLock(dropdown);
+    }
+    updateMselFromDropdown(campo);
+  });
+
+  calcular();
+
+  const btnGuardar = document.getElementById('btn-guardar');
+  if (btnGuardar) btnGuardar.innerHTML = '💾 Actualizar registro';
+
+  showPage('form', document.getElementById('tab-form'));
+  toast('✏️ Editando árbol #' + r.num_arbol);
+}
+
+// ══════════════════════════════════════
 // GUARDAR
 // ══════════════════════════════════════
 function guardarRegistro() {
   const num = document.getElementById('num_arbol').value.trim();
   if (!num) { toast('⚠️ Ingresa el número de árbol'); return; }
-  if (parseFloat(num) < 0) { toast('⚠️ El número de árbol no puede ser negativo'); return; }
+
+  const dataExistente = getData();
+  const registroPrevio = editandoId ? dataExistente.find(x => x.id === editandoId) : null;
 
   const r = {
-    id: Date.now(),
-    fecha: new Date().toLocaleDateString('es-CO'),
-    hora:  new Date().toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit'}),
+    id: editandoId || Date.now(),
+    fecha: registroPrevio ? registroPrevio.fecha : new Date().toLocaleDateString('es-CO'),
+    hora:  registroPrevio ? registroPrevio.hora  : new Date().toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit'}),
     num_arbol:          num,
     bifurcaciones:      v('bifurcaciones'),
-    nombre_comun:       v('nombre_comun') === 'Otro' ? (v('nombre_comun_otro') || 'Otro') : v('nombre_comun'),
+    nombre_comun:       v('nombre_comun'),
     nombre_cientifico:  v('nombre_cientifico'),
     familia:            v('familia'),
     cap_cm:             aComa(v('cap_cm')),
@@ -2318,11 +2396,25 @@ function guardarRegistro() {
     observaciones:      v('observaciones'),
   };
 
-  const data = getData();
-  data.push(r);
-  setData(data);
-  toast('✅ Árbol #' + String(num).padStart(3,'0') + ' guardado');
+  const numDisplay = /^[0-9]+$/.test(num) ? String(num).padStart(3,'0') : num;
+  const data = dataExistente;
+
+  if (editandoId) {
+    const idx = data.findIndex(x => x.id === editandoId);
+    if (idx !== -1) data[idx] = r; else data.push(r);
+    setData(data);
+    toast('✅ Árbol #' + numDisplay + ' actualizado');
+  } else {
+    data.push(r);
+    setData(data);
+    toast('✅ Árbol #' + numDisplay + ' guardado');
+  }
+
+  editandoId = null;
+  const btnGuardar = document.getElementById('btn-guardar');
+  if (btnGuardar) btnGuardar.innerHTML = '💾 Guardar registro';
   limpiar();
+  showPage('historial', document.getElementById('tab-historial'));
 }
 
 function v(id) {
@@ -2340,7 +2432,6 @@ function limpiar() {
   document.querySelectorAll('#page-form .chip').forEach(c => c.classList.remove('sel'));
   resetMsel('estado_fisico');
   resetMsel('relacion_red');
-  document.getElementById('field_otro_nombre').style.display = 'none';
   // GPS
   document.getElementById('gps-info').style.display   = 'none';
   document.getElementById('gps-error').style.display  = 'none';
@@ -2387,12 +2478,13 @@ function renderHistorial() {
       <div class="record-card">
         <div class="record-head" onclick="toggleDetalle('det-${r.id}', this)" role="button" tabindex="0">
           <div class="record-left">
-            <div class="record-num">#${String(r.num_arbol).padStart(3,'0')}${r.bifurcaciones ? '<span class="record-bif">' + r.bifurcaciones + '</span>' : ''}</div>
+            <div class="record-num">#${/^[0-9]+$/.test(String(r.num_arbol)) ? String(r.num_arbol).padStart(3,'0') : r.num_arbol}${r.bifurcaciones ? '<span class="record-bif">' + r.bifurcaciones + '</span>' : ''}</div>
             <div class="record-name">${r.nombre_comun || 'Sin nombre'}</div>
             <div class="record-meta">${r.fecha} · ${r.barrio || r.direccion || 'Sin dirección'}</div>
           </div>
           <div class="record-right">
             ${r.estado_sanitario ? `<span class="badge ${badgeClass}">${r.estado_sanitario}</span>` : ''}
+            <button type="button" class="record-edit-btn" onclick="event.stopPropagation(); editarRegistro(${r.id})" aria-label="Editar árbol">✏️</button>
             <button type="button" class="record-del-btn" onclick="event.stopPropagation(); confirmarEliminar(${r.id})" aria-label="Eliminar árbol">🗑️</button>
             <span class="chevron" id="chev-${r.id}">▼</span>
           </div>
