@@ -2428,7 +2428,16 @@ function editarRegistro(id) {
     'altura_comercial','diam_copa','coord_x','coord_y','direccion','barrio','observaciones'];
   camposTexto.forEach(campo => {
     const el = document.getElementById(campo);
-    if (el && r[campo] !== undefined) el.value = r[campo];
+    if (el && r[campo] !== undefined) {
+      // Los valores numéricos se guardan con coma decimal (formato colombiano),
+      // pero los <input type="number"> solo aceptan punto decimal.
+      // Si se asigna con coma, el navegador descarta el valor y queda en blanco/0.
+      if (el.type === 'number' && typeof r[campo] === 'string') {
+        el.value = r[campo].replace(',', '.');
+      } else {
+        el.value = r[campo];
+      }
+    }
   });
 
   // Selects simples
