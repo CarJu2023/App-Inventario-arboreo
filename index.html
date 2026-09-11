@@ -10,7 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <style>
 :root {
   --forest:    #1a3d1a;
@@ -494,6 +495,120 @@ select {
 .gps-btn:active { transform: scale(0.98); }
 .gps-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
+/* ══════════════════════════════════════
+   Fotografía
+══════════════════════════════════════ */
+.foto-input-hidden { display: none; }
+
+.foto-btn {
+  width: 100%;
+  padding: 14px 18px;
+  border: 2px dashed var(--leaf);
+  border-radius: var(--radius-sm);
+  background: var(--sky);
+  color: var(--canopy);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all var(--transition);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.foto-btn:hover { background: var(--mint); border-color: var(--canopy); }
+.foto-btn:active { transform: scale(0.98); }
+
+.foto-preview-wrap {
+  display: none;
+  position: relative;
+  margin-top: 12px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.foto-preview-wrap img {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  cursor: zoom-in;
+}
+.foto-preview-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(17,24,22,0.65);
+  color: white;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.foto-preview-hint {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 6px 10px;
+  font-size: 10px;
+  color: white;
+  background: linear-gradient(to top, rgba(0,0,0,0.55), transparent);
+  letter-spacing: 0.03em;
+}
+
+.record-thumb {
+  width: 46px;
+  height: 46px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  cursor: zoom-in;
+}
+
+.foto-lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10,15,10,0.92);
+  z-index: 999;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.foto-lightbox.open { display: flex; }
+.foto-lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+}
+.foto-lightbox-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.15);
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .gps-spinner {
   width: 18px; height: 18px;
   border: 2.5px solid var(--mint);
@@ -630,7 +745,7 @@ select {
   touch-action: manipulation;
 }
 
-.record-left { flex: 1; min-width: 0; }
+.record-left { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
 
 .record-num {
   font-family: var(--font-display);
@@ -1362,6 +1477,20 @@ select {
     </div>
   </div>
 
+  <!-- Fotografía -->
+  <div class="card">
+    <div class="card-title">Fotografía</div>
+    <input type="file" id="foto-input" class="foto-input-hidden" accept="image/*" capture="environment" onchange="manejarFoto(this)">
+    <button type="button" class="foto-btn" id="foto-btn" onclick="document.getElementById('foto-input').click()">
+      📷 Tomar o adjuntar foto
+    </button>
+    <div class="foto-preview-wrap" id="foto-preview-wrap">
+      <img id="foto-preview-img" src="" alt="Fotografía" onclick="abrirLightbox(this.src)">
+      <button type="button" class="foto-preview-remove" onclick="eliminarFoto()" aria-label="Quitar foto">✕</button>
+      <div class="foto-preview-hint">Toca la imagen para verla en grande</div>
+    </div>
+  </div>
+
   <!-- OBSERVACIONES -->
   <div class="card">
     <div class="card-title">Observaciones</div>
@@ -1407,7 +1536,7 @@ select {
     </div>
 
     <div class="card-title" style="margin-bottom:12px">Exportar a Excel</div>
-    <p style="font-size:13px; color:var(--muted); margin-bottom:16px; line-height:1.6;">Descarga todos los registros en formato .xlsx con los campos del inventario arbóreo.</p>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:16px; line-height:1.6;">Descarga todos los registros en formato .xlsx con los campos del inventario arbóreo, incluyendo la foto de cada árbol incrustada en la última columna.</p>
     <button class="export-btn" type="button" onclick="exportarExcel()">
       📥 Descargar Excel
     </button>
@@ -1451,6 +1580,12 @@ select {
 
 <!-- TOAST -->
 <div id="toast"></div>
+
+<!-- LIGHTBOX FOTO -->
+<div class="foto-lightbox" id="foto-lightbox" onclick="cerrarLightbox(event)">
+  <button type="button" class="foto-lightbox-close" onclick="cerrarLightbox(event)" aria-label="Cerrar">✕</button>
+  <img id="foto-lightbox-img" src="" alt="Fotografía">
+</div>
 
 <script>
 // ══════════════════════════════════════
@@ -2194,6 +2329,81 @@ function toggleManual() {
 }
 
 // ══════════════════════════════════════
+// Fotografía
+// ══════════════════════════════════════
+let imagenActual = null; // dataURL (base64) comprimido de la foto del registro actual
+
+function manejarFoto(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    toast('⚠️ Selecciona un archivo de imagen válido');
+    input.value = '';
+    return;
+  }
+
+  comprimirImagen(file, 1000, 0.72, function(dataUrl) {
+    imagenActual = dataUrl;
+    mostrarPreviewFoto(dataUrl);
+  });
+}
+
+// Redimensiona y comprime la imagen en el navegador (canvas) antes de
+// guardarla, para no saturar el almacenamiento local del dispositivo.
+function comprimirImagen(file, maxDim, calidad, callback) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      let w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        if (w >= h) { h = Math.round(h * (maxDim / w)); w = maxDim; }
+        else        { w = Math.round(w * (maxDim / h)); h = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/jpeg', calidad));
+    };
+    img.onerror = function() { toast('⚠️ No se pudo procesar la imagen'); };
+    img.src = e.target.result;
+  };
+  reader.onerror = function() { toast('⚠️ No se pudo leer la imagen'); };
+  reader.readAsDataURL(file);
+}
+
+function mostrarPreviewFoto(dataUrl) {
+  const wrap = document.getElementById('foto-preview-wrap');
+  const img  = document.getElementById('foto-preview-img');
+  img.src = dataUrl;
+  wrap.style.display = 'block';
+  document.getElementById('foto-btn').textContent = '📷 Cambiar foto';
+}
+
+function eliminarFoto() {
+  imagenActual = null;
+  document.getElementById('foto-input').value = '';
+  document.getElementById('foto-preview-wrap').style.display = 'none';
+  document.getElementById('foto-preview-img').src = '';
+  document.getElementById('foto-btn').textContent = '📷 Tomar o adjuntar foto';
+}
+
+function abrirLightbox(src) {
+  if (!src) return;
+  document.getElementById('foto-lightbox-img').src = src;
+  document.getElementById('foto-lightbox').classList.add('open');
+}
+
+function cerrarLightbox(e) {
+  if (e) e.stopPropagation();
+  document.getElementById('foto-lightbox').classList.remove('open');
+  document.getElementById('foto-lightbox-img').src = '';
+}
+
+// ══════════════════════════════════════
 // EDITAR REGISTRO (desde el Historial)
 // ══════════════════════════════════════
 let editandoId = null;
@@ -2264,6 +2474,12 @@ function editarRegistro(id) {
 
   calcular();
 
+  // Foto
+  if (r.imagen) {
+    imagenActual = r.imagen;
+    mostrarPreviewFoto(r.imagen);
+  }
+
   const btnGuardar = document.getElementById('btn-guardar');
   if (btnGuardar) btnGuardar.innerHTML = '💾 Actualizar registro';
 
@@ -2318,6 +2534,7 @@ function guardarRegistro() {
     conflicto_redes:    v('conflicto_redes'),
     relacion_red:       v('relacion_red'),
     observaciones:      v('observaciones'),
+    imagen:             imagenActual || '',
   };
 
   const numDisplay = /^[0-9]+$/.test(num) ? String(num).padStart(3,'0') : num;
@@ -2356,6 +2573,8 @@ function limpiar() {
   document.querySelectorAll('#page-form .chip').forEach(c => c.classList.remove('sel'));
   resetMsel('estado_fisico');
   resetMsel('relacion_red');
+  // Foto
+  eliminarFoto();
   // GPS
   document.getElementById('gps-info').style.display   = 'none';
   document.getElementById('gps-error').style.display  = 'none';
@@ -2402,9 +2621,12 @@ function renderHistorial() {
       <div class="record-card">
         <div class="record-head" onclick="toggleDetalle('det-${r.id}', this)" role="button" tabindex="0">
           <div class="record-left">
-            <div class="record-num">#${/^[0-9]+$/.test(String(r.num_arbol)) ? String(r.num_arbol).padStart(3,'0') : r.num_arbol}${r.bifurcaciones ? '<span class="record-bif">' + r.bifurcaciones + '</span>' : ''}</div>
-            <div class="record-name">${r.nombre_comun || 'Sin nombre'}</div>
-            <div class="record-meta">${r.fecha} · ${r.barrio || r.direccion || 'Sin dirección'}</div>
+            ${r.imagen ? `<img class="record-thumb" src="${r.imagen}" alt="Foto árbol #${r.num_arbol}" onclick="event.stopPropagation(); abrirLightbox('${r.imagen}')">` : ''}
+            <div>
+              <div class="record-num">#${/^[0-9]+$/.test(String(r.num_arbol)) ? String(r.num_arbol).padStart(3,'0') : r.num_arbol}${r.bifurcaciones ? '<span class="record-bif">' + r.bifurcaciones + '</span>' : ''}</div>
+              <div class="record-name">${r.nombre_comun || 'Sin nombre'}</div>
+              <div class="record-meta">${r.fecha} · ${r.barrio || r.direccion || 'Sin dirección'}</div>
+            </div>
           </div>
           <div class="record-right">
             ${r.estado_sanitario ? `<span class="badge ${badgeClass}">${r.estado_sanitario}</span>` : ''}
@@ -2531,7 +2753,7 @@ function formatoNumCO(val) {
   return String(val).replace('.', ',');
 }
 
-function exportarExcel() {
+async function exportarExcel() {
   const data = getData();
   if (data.length === 0) { toast('⚠️ No hay datos para exportar'); return; }
 
@@ -2545,66 +2767,91 @@ function exportarExcel() {
     'HÁBITO CRECIMIENTO','VALOR ESTÉTICO','EMPLAZAMIENTO',
     'ACCIÓN INTERVENCIÓN','COORD X (Lng)','COORD Y (Lat)',
     'DIRECCIÓN','BARRIO','COMUNA',
-    'CONFLICTO CON REDES DE SERVICIOS PÚBLICOS','RELACIÓN DE SERVICIO PÚBLICO','OBSERVACIONES','FECHA','HORA'
+    'CONFLICTO CON REDES DE SERVICIOS PÚBLICOS','RELACIÓN DE SERVICIO PÚBLICO','OBSERVACIONES','FECHA','HORA',
+    'FOTO'
   ];
+  const fotoColIndex = headers.length - 1; // índice 0-based de la columna FOTO
 
   // Índices de columnas que contienen valores numéricos decimales
   // (las coordenadas se dejan con punto decimal, no coma)
   const colsDecimales = new Set([5,6,7,8,9,10,12,13,14,15,16]);
 
-  const rows = data.map(r => {
-    const fila = [
-      r.num_arbol, r.bifurcaciones, r.nombre_comun, r.nombre_cientifico, r.familia,
-      r.cap_cm, r.dap_cm, r.cap_m, r.dap_m,
-      r.altura_total, r.altura_comercial, r.tipo_altura,
-      r.vol_total, r.vol_comercial, r.diam_basal,
-      r.diam_copa, r.diam_copa_polar,
-      r.densidad_copa, r.estado_copa, r.estado_fisico, r.estado_sanitario,
-      r.habito_crecimiento, r.valor_estetico, r.emplazamiento,
-      r.accion_intervencion, r.coord_x, r.coord_y,
-      r.direccion, r.barrio, r.comuna,
-      r.conflicto_redes, r.relacion_red, r.observaciones, r.fecha, r.hora
-    ];
-    return fila.map((val, i) => colsDecimales.has(i) ? formatoNumCO(val) : val);
-  });
+  toast('⏳ Generando Excel...');
 
-  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  try {
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'Inventario Arbóreo';
+    const ws = wb.addWorksheet('Inventario Arbóreo');
 
-  // Estilos de cabecera
-  const range = XLSX.utils.decode_range(ws['!ref']);
-  for (let C = range.s.c; C <= range.e.c; C++) {
-    const addr = XLSX.utils.encode_cell({ r: 0, c: C });
-    if (!ws[addr]) continue;
-    ws[addr].s = {
-      fill: { fgColor: { rgb: '2D6A2D' } },
-      font: { bold: true, color: { rgb: 'FFFFFF' } },
-      alignment: { horizontal: 'center', wrapText: true }
-    };
-  }
+    // Columnas y anchos
+    ws.columns = headers.map((h, i) => ({
+      width: i === fotoColIndex ? 16 : Math.max(h.length, 14)
+    }));
 
-  // Alinear a la derecha las columnas numéricas (para que se vean como números)
-  for (let R = 1; R <= range.e.r; R++) {
-    colsDecimales.forEach(C => {
-      const addr = XLSX.utils.encode_cell({ r: R, c: C });
-      if (ws[addr]) {
-        ws[addr].t = 's';
-        ws[addr].s = { alignment: { horizontal: 'right' } };
+    // Cabecera
+    const headerRow = ws.addRow(headers);
+    headerRow.eachCell(cell => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2D6A2D' } };
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    });
+    headerRow.height = 26;
+
+    // Filas de datos
+    data.forEach((r, i) => {
+      const filaBase = [
+        r.num_arbol, r.bifurcaciones, r.nombre_comun, r.nombre_cientifico, r.familia,
+        r.cap_cm, r.dap_cm, r.cap_m, r.dap_m,
+        r.altura_total, r.altura_comercial, r.tipo_altura,
+        r.vol_total, r.vol_comercial, r.diam_basal,
+        r.diam_copa, r.diam_copa_polar,
+        r.densidad_copa, r.estado_copa, r.estado_fisico, r.estado_sanitario,
+        r.habito_crecimiento, r.valor_estetico, r.emplazamiento,
+        r.accion_intervencion, r.coord_x, r.coord_y,
+        r.direccion, r.barrio, r.comuna,
+        r.conflicto_redes, r.relacion_red, r.observaciones, r.fecha, r.hora,
+        '' // la celda de FOTO se deja vacía; la imagen se ancla encima
+      ];
+      const fila = filaBase.map((val, idx) => colsDecimales.has(idx) ? formatoNumCO(val) : val);
+      const row = ws.addRow(fila);
+
+      colsDecimales.forEach(idx => {
+        row.getCell(idx + 1).alignment = { horizontal: 'right' };
+      });
+
+      const rowNumber = row.number; // 1-based
+
+      if (r.imagen) {
+        try {
+          const ext = /^data:image\/png/i.test(r.imagen) ? 'png' : 'jpeg';
+          const imageId = wb.addImage({ base64: r.imagen, extension: ext });
+          ws.addImage(imageId, {
+            tl: { col: fotoColIndex, row: rowNumber - 1 },
+            br: { col: fotoColIndex + 1, row: rowNumber }
+          });
+          row.height = 70;
+        } catch (e) {
+          console.error('No se pudo incrustar la imagen del árbol #' + r.num_arbol, e);
+        }
       }
     });
+
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+    const fecha = new Date().toISOString().slice(0, 10);
+    const projects = getProjects();
+    const active = projects.find(p => p.id === getActiveProjectId());
+    const nombreArchivo = active
+      ? active.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+      : 'proyecto';
+
+    saveAs(blob, 'inventario_arboreo_' + nombreArchivo + '_' + fecha + '.xlsx');
+    toast('📥 Excel descargado');
+  } catch (e) {
+    console.error(e);
+    toast('⚠️ Ocurrió un error generando el Excel');
   }
-
-  ws['!cols'] = headers.map(h => ({ wch: Math.max(h.length, 14) }));
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Inventario Arbóreo');
-  const fecha = new Date().toISOString().slice(0, 10);
-  const projects = getProjects();
-  const active = projects.find(p => p.id === getActiveProjectId());
-  const nombreArchivo = active
-    ? active.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
-    : 'proyecto';
-  XLSX.writeFile(wb, 'inventario_arboreo_' + nombreArchivo + '_' + fecha + '.xlsx');
-  toast('📥 Excel descargado');
 }
 
 // ══════════════════════════════════════
