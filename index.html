@@ -2515,7 +2515,7 @@ function actualizarBotonGuardar() {
   const btn = document.getElementById('btn-guardar');
   if (!btn) return;
   if (editandoId)        btn.innerHTML = '💾 Actualizar registro';
-  else if (multiActivo)  btn.innerHTML = '💾 Guardar ' + (cantBif + 1) + ' registros.';
+  else if (multiActivo)  btn.innerHTML = '💾 Guardar ' + (cantBif + 1) + ' registros';
   else                   btn.innerHTML = '💾 Guardar registro';
 }
 
