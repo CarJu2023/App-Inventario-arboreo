@@ -1177,7 +1177,7 @@ select {
         <label for="bif_cantidad">Bifurcaciones</label>
         <div class="stepper">
           <button type="button" onclick="cambiarCantBif(-1)" aria-label="Quitar una bifurcación">−</button>
-          <input type="number" id="bif_cantidad" value="2" min="2" max="20" inputmode="numeric" onchange="pedirCantBif(this.value)">
+          <input type="number" id="bif_cantidad" value="1" min="1" max="20" inputmode="numeric" onchange="pedirCantBif(this.value)">
           <button type="button" onclick="cambiarCantBif(1)" aria-label="Agregar una bifurcación">+</button>
         </div>
       </div>
@@ -2528,7 +2528,7 @@ function actualizarBotonGuardar() {
 const LETRAS_BIF = 'ABCDEFGHIJKLMNOPQRST'.split('');
 const MAX_BIF = LETRAS_BIF.length; // 20, igual que el selector normal (A–T)
 let multiActivo = false;
-let cantBif = 2;
+let cantBif = 1;
 let bifValores = []; // [{cap, ht, hc, copa}, ...] una entrada por bifurcación
 
 function toggleMultiBif() {
@@ -2626,7 +2626,7 @@ function pedirCantBif(valor) {
   let n = parseInt(valor, 10);
   if (isNaN(n)) { input.value = cantBif; return; }
   if (n > MAX_BIF) { toast('⚠️ Máximo ' + MAX_BIF + ' bifurcaciones (A–T)'); n = MAX_BIF; }
-  if (n < 2) n = 2;
+  if (n < 1) n = 1;
   if (n === cantBif) { input.value = cantBif; return; }
 
   // Si se van a quitar bifurcaciones que ya tienen medidas, confirmar primero
@@ -2654,9 +2654,9 @@ function aplicarCantBif(n) {
 
 function resetMulti() {
   multiActivo = false;
-  cantBif = 2;
+  cantBif = 1;
   bifValores = [];
-  document.getElementById('bif_cantidad').value = 2;
+  document.getElementById('bif_cantidad').value = 1;
   document.getElementById('bif-list').innerHTML = '';
   aplicarModoMulti();
 }
@@ -2764,7 +2764,7 @@ function crearRegistrosBifurcaciones(num) {
   });
   setData(data);
 
-  toast('✅ Árbol ' + etiquetaNum(num) + ' y sus ' + cantBif + ' bifurcaciones guardados');
+  toast('✅ Árbol ' + etiquetaNum(num) + ' y su' + (cantBif === 1 ? ' ' : 's ') + cantBif + (cantBif === 1 ? ' bifurcación guardada' : ' bifurcaciones guardadas'));
 
   editandoId = null;
   limpiar();
